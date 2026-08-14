@@ -5,6 +5,7 @@ import { useIntegrations } from '../store/integrations'
 import { STATUS_META, DEPLOYMENT_NOTE, type Integration } from '../data/integrations'
 import { ELEMENT_BY_KEY } from '../lib/riskModel'
 import ConnectWizard from '../components/ConnectWizard'
+import { BrandLogo } from '../components/BrandLogo'
 
 export default function Integrations() {
   const { integrations, disconnect } = useIntegrations()
@@ -37,6 +38,18 @@ export default function Integrations() {
       <div className="flex gap-2 rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-500 shadow-card">
         <ShieldCheck size={16} className="mt-0.5 shrink-0 text-green-500" />
         {DEPLOYMENT_NOTE}
+      </div>
+
+      {/* Works with your stack — brand logo wall */}
+      <div className="card p-4">
+        <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">Works with your stack</div>
+        <div className="flex flex-wrap gap-2">
+          {Array.from(new Set(integrations.flatMap((i) => i.vendors).filter((v) => v !== 'PhishSheriff Native' && v !== 'PhishSheriff Extension'))).map((v) => (
+            <span key={v} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white py-1 pl-1 pr-2.5 text-xs text-slate-600">
+              <BrandLogo name={v} size={18} /> {v}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Headline connectors: SEG, DLP, UBA, PIM, PAM */}
@@ -100,16 +113,27 @@ function IntegrationCard({ i, onConnect, onDisconnect }: { i: Integration; onCon
 
       <p className="mt-2 text-xs leading-relaxed text-slate-500">{i.purpose}</p>
 
-      <div className="mt-3 flex flex-wrap gap-1">
+      <div className="mt-3 flex flex-wrap gap-1.5">
         {i.vendors.slice(0, 4).map((v) => (
-          <span key={v} className={`chip text-[11px] ${i.vendor === v ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-400'}`}>{v}</span>
+          <span
+            key={v}
+            className={`inline-flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2.5 text-[11px] ${i.vendor === v ? 'bg-brand-50 font-semibold text-brand-700' : 'bg-slate-50 text-slate-500'}`}
+          >
+            <BrandLogo name={v} size={16} /> {v}
+          </span>
         ))}
         {i.vendors.length > 4 && <span className="chip bg-slate-50 text-[11px] text-slate-400">+{i.vendors.length - 4}</span>}
       </div>
 
       {isConnected ? (
-        <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3 text-center">
-          <Metric label="Vendor" value={i.vendor?.split(' ')[0] ?? '—'} />
+        <div className="mt-3 grid grid-cols-[auto,1fr,1fr] items-center gap-2 rounded-xl bg-slate-50 p-3">
+          <div className="flex items-center gap-2">
+            <BrandLogo name={i.vendor ?? ''} size={30} />
+            <div className="min-w-0">
+              <div className="truncate text-xs font-bold text-slate-800">{i.vendor}</div>
+              <div className="text-[10px] text-slate-400">{i.method}</div>
+            </div>
+          </div>
           <Metric label="Signals/day" value={(i.signalsPerDay ?? 0).toLocaleString()} />
           <Metric label="Coverage" value={`${i.coverage ?? 0}%`} />
         </div>

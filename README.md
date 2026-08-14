@@ -6,6 +6,15 @@ gives security teams **a unified view of every human risk element and the risk e
 person carries**, correlating signals from across the PhishSheriff product suite into
 a single Human Risk Score.
 
+> **Prototype scope.** This is the **console / UX layer**. All data — connected
+> integrations, signals/day, coverage, the live incident stream, telemetry — is
+> **simulated in-app** (`src/lib/live.ts`, `src/store/integrations.tsx`). Nothing
+> yet calls Proofpoint, Purview, CyberArk, etc. Making the integrations *functional*
+> requires a backend per connector: OAuth/API credentials, an in-tenant collector,
+> vendor API/SIEM parsers, a normalization pipeline, and a datastore. The live hooks
+> are structured so a WebSocket/SSE + collector backend can drop in without changing
+> the components.
+
 ---
 
 ## Run it
@@ -59,12 +68,10 @@ rollups in [`src/data/analytics.ts`](src/data/analytics.ts).
   business impact context. (Open **John Doe** for the deck's reference story.)
 - **Risk Elements** (`/elements`, `/elements/:key`) — each element's org contribution,
   workforce distribution, and highest-exposure people.
-- **Live Operations** (`/live`) — a single pane over the entire workforce: live-ticking
-  telemetry (events/min, incidents/min), a **Workforce Risk Matrix** (every employee as a
-  risk-colored tile), and a streaming incident wall fed by the integrated tools.
-- **AI Autopilot** (`/autopilot`) — where the machine takes over remediation end-to-end.
-  Autonomy modes (Suggest → Approve → **Autonomous**), per-task takeover toggles mapped to
-  the source tool, hours-saved stats, guardrails, and a live feed of actions the AI executed.
+- **Live Operations · SOC** (`/live`) — a single pane over the entire workforce: live-ticking
+  signal telemetry, incidents-by-severity, an incident queue with vendor logos and status
+  (Open / Investigating / Auto-resolved), incidents-by-source, and a **Workforce Risk Matrix**
+  (every employee as a risk-colored tile). SOAR playbooks auto-resolve a share of incidents.
 - **Integrations** (`/integrations`) — connect the security tools already in your
   environment. A guided 6-step **connect wizard** for **Email Gateway, DLP, UBA, PIM, PAM**
   (plus native sensors), each showing supported vendors, deployment method, status, signals/day,

@@ -4,7 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Quote,
-  Sparkles,
+  FileText,
   Users2,
   BarChart3,
   ShieldAlert,
@@ -49,11 +49,8 @@ export default function PersonDetail() {
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold text-slate-900">
-            Human Risk Story
-            <span className="chip bg-brand-50 text-brand-600"><Sparkles size={12} /> AI-generated</span>
-          </h1>
-          <p className="text-sm text-slate-500">AI explains why risk changed — because context drives action.</p>
+          <h1 className="text-xl font-bold text-slate-900">Human Risk Story</h1>
+          <p className="text-sm text-slate-500">Why this person's risk changed — the complete signal timeline, in context.</p>
         </div>
       </div>
 
@@ -155,8 +152,8 @@ export default function PersonDetail() {
         <div className="space-y-4 xl:col-span-4">
           <div className="card p-5">
             <div className="mb-2 flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-50 text-brand-600"><Sparkles size={13} /></span>
-              <h3 className="text-sm font-semibold text-slate-800">AI Explanation</h3>
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-50 text-brand-600"><FileText size={13} /></span>
+              <h3 className="text-sm font-semibold text-slate-800">Risk Rationale</h3>
             </div>
             <div className="relative rounded-xl bg-slate-50 p-3 text-sm leading-relaxed text-slate-600">
               <Quote size={16} className="absolute -left-1 -top-1 text-slate-200" />
@@ -164,7 +161,7 @@ export default function PersonDetail() {
             </div>
             <div className="mt-4">
               <div className="flex items-center justify-between text-xs text-slate-500">
-                <span className="font-semibold uppercase tracking-wide text-slate-400">AI Confidence</span>
+                <span className="font-semibold uppercase tracking-wide text-slate-400">Signal Confidence</span>
                 <span className="text-lg font-extrabold text-emerald-500">{p.aiConfidence}%</span>
               </div>
               <div className="mt-1 h-2 w-full rounded-full bg-slate-100">

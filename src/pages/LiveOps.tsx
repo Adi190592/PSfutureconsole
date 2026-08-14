@@ -2,23 +2,25 @@ import { Link } from 'react-router-dom'
 import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   ResponsiveContainer,
   XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
-  Cell,
 } from 'recharts'
-import { Activity, AlertTriangle, Bot, Zap } from 'lucide-react'
-import { useIncidentFeed, useTelemetry, useLiveCounter } from '../lib/live'
+import { Activity, AlertTriangle, ShieldCheck, Timer, Flame } from 'lucide-react'
+import {
+  useIncidentFeed,
+  useTelemetry,
+  useLiveCounter,
+  tallyBySource,
+  tallyBySeverity,
+} from '../lib/live'
 import { PEOPLE } from '../data/people'
 import { LEVEL_META } from '../lib/riskModel'
-import { orgStats } from '../data/analytics'
-import { RiskBadge } from '../components/ui'
+import { BrandLogo } from '../components/BrandLogo'
 
-const active = [...PEOPLE.filter((p) => p.status === 'Active')].sort((a, b) => b.score - a.score)
+const activePeople = [...PEOPLE.filter((p) => p.status === 'Active')].sort((a, b) => b.score - a.score)
 
 function LiveDot() {
   return (
@@ -32,35 +34,48 @@ function LiveDot() {
   )
 }
 
+const STATUS_STYLE: Record<string, string> = {
+  Open: 'bg-red-50 text-red-600',
+  Investigating: 'bg-amber-50 text-amber-600',
+  'Auto-resolved': 'bg-green-50 text-green-600',
+}
+
 export default function LiveOps() {
-  const series = useTelemetry(40, 1500)
-  const incidents = useIncidentFeed(40, 1700, 0.45)
-  const autopilotToday = useLiveCounter(1284, 0, 3, 1700)
+  const series = useTelemetry(44, 1500)
+  const feed = useIncidentFeed(60, 1600, 0.42)
+  const autoResolvedToday = useLiveCounter(1284, 0, 3, 1600)
+  const openNow = useLiveCounter(37, -1, 2, 1600)
   const latest = series[series.length - 1]
-  const openIncidents = useLiveCounter(37, -1, 2, 1700)
+
+  const bySeverity = tallyBySeverity(feed)
+  const bySource = tallyBySource(feed).slice(0, 6)
+  const maxSource = Math.max(...bySource.map((s) => s.count), 1)
+  const critical = bySeverity.find((s) => s.sev === 'High')?.count ?? 0
+  const autoPct = Math.round((feed.filter((i) => i.status === 'Auto-resolved').length / Math.max(feed.length, 1)) * 100)
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold text-slate-900">Live Operations <LiveDot /></h1>
-          <p className="text-sm text-slate-500">One pane over the entire workforce — live telemetry from every integrated tool.</p>
+          <h1 className="flex items-center gap-2 text-xl font-bold text-slate-900">Live Operations · SOC <LiveDot /></h1>
+          <p className="text-sm text-slate-500">One pane over the whole workforce — live telemetry and incidents from every connected tool.</p>
         </div>
       </div>
 
       {/* Live KPIs */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <LiveKpi icon={Activity} accent="#1a53eb" label="Events / min" value={latest.events.toLocaleString()} live />
-        <LiveKpi icon={AlertTriangle} accent="#ef4444" label="Open incidents" value={`${openIncidents}`} live />
-        <LiveKpi icon={Zap} accent="#f59e0b" label="Users at risk now" value={`${orgStats.high + orgStats.medium}`} />
-        <LiveKpi icon={Bot} accent="#22c55e" label="Autopilot actions today" value={autopilotToday.toLocaleString()} live />
+        <LiveKpi icon={AlertTriangle} accent="#ef4444" label="Open incidents" value={`${openNow}`} live />
+        <LiveKpi icon={Flame} accent="#f97316" label="Critical now" value={`${critical}`} live />
+        <LiveKpi icon={ShieldCheck} accent="#22c55e" label="Auto-resolved" value={`${autoPct}%`} />
+        <LiveKpi icon={Timer} accent="#8b5cf6" label="Mean time to respond" value="4m 12s" />
       </div>
 
-      {/* Live telemetry charts */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="card p-4">
+      {/* Telemetry + severity */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="card p-4 lg:col-span-2">
           <ChartHead title="Signal Ingestion" unit="events / interval" color="#1a53eb" />
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={190}>
             <AreaChart data={series} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="liveEvents" x1="0" y1="0" x2="0" y2="1">
@@ -76,87 +91,129 @@ export default function LiveOps() {
             </AreaChart>
           </ResponsiveContainer>
         </div>
+
         <div className="card p-4">
-          <ChartHead title="Incidents" unit="per interval" color="#ef4444" />
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={series} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" vertical={false} />
-              <XAxis dataKey="t" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} minTickGap={40} />
-              <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
-              <Bar dataKey="incidents" radius={[3, 3, 0, 0]} isAnimationActive={false}>
-                {series.map((s, i) => (
-                  <Cell key={i} fill={s.incidents > 24 ? '#ef4444' : s.incidents > 14 ? '#f59e0b' : '#22c55e'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <h3 className="mb-3 text-sm font-semibold text-slate-800">Incidents by Severity</h3>
+          <div className="space-y-3">
+            {bySeverity.map((s) => {
+              const total = feed.length || 1
+              const pct = Math.round((s.count / total) * 100)
+              return (
+                <div key={s.sev}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 font-medium text-slate-600">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: LEVEL_META[s.sev].color }} /> {s.sev}
+                    </span>
+                    <span className="font-semibold text-slate-700">{s.count} <span className="font-normal text-slate-400">({pct}%)</span></span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100">
+                    <div className="h-2 rounded-full" style={{ width: `${pct}%`, background: LEVEL_META[s.sev].color }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-500">
+            {feed.length} incidents in the live window · {autoResolvedToday.toLocaleString()} auto-resolved today via SOAR playbooks.
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-        {/* Workforce risk matrix — single pane of the whole user base */}
-        <div className="card p-4 xl:col-span-3">
+      {/* Incident queue + by source */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="card flex flex-col p-4 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">Workforce Risk Matrix</h3>
-            <div className="flex items-center gap-3 text-[11px] text-slate-500">
-              {(['High', 'Medium', 'Low', 'Secure'] as const).map((lv) => (
-                <span key={lv} className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: LEVEL_META[lv].color }} /> {lv}</span>
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-10 gap-1.5 sm:grid-cols-12 lg:grid-cols-[repeat(16,minmax(0,1fr))]">
-            {active.map((p) => (
-              <Link
-                key={p.id}
-                to={`/people/${p.id}`}
-                title={`${p.name} · ${p.department} · ${p.score}`}
-                className="group relative aspect-square rounded-[5px] transition-transform hover:z-10 hover:scale-125"
-                style={{ background: LEVEL_META[p.level].color }}
-              >
-                <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white/0 group-hover:text-white/90">
-                  {p.score}
-                </span>
-              </Link>
-            ))}
-          </div>
-          <p className="mt-3 text-[11px] text-slate-400">
-            Every active employee, one tile — colored by live Human Risk Score. Hover for score, click to open the Human Risk Story.
-          </p>
-        </div>
-
-        {/* Live incident stream */}
-        <div className="card flex flex-col p-4 xl:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">Live Incident Stream</h3>
+            <h3 className="text-sm font-semibold text-slate-800">Incident Queue</h3>
             <LiveDot />
           </div>
-          <div className="max-h-[380px] space-y-1.5 overflow-y-auto pr-1">
-            {incidents.map((inc) => (
-              <Link
-                key={inc.id}
-                to={`/people/${inc.personId}`}
-                className="flex items-start gap-2 rounded-lg border border-slate-100 px-2.5 py-2 hover:bg-slate-50"
-                style={{ borderLeftColor: LEVEL_META[inc.severity].color, borderLeftWidth: 3 }}
-              >
+          <div className="max-h-[420px] overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-white">
+                <tr className="text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  <th className="px-2 py-2">Time</th>
+                  <th className="px-2 py-2">Sev</th>
+                  <th className="px-2 py-2">Source</th>
+                  <th className="px-2 py-2">Incident</th>
+                  <th className="px-2 py-2">User</th>
+                  <th className="px-2 py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {feed.slice(0, 30).map((inc) => (
+                  <tr key={inc.id} className="border-t border-slate-50 hover:bg-slate-50">
+                    <td className="whitespace-nowrap px-2 py-2 text-[11px] tabular-nums text-slate-400">{inc.time}</td>
+                    <td className="px-2 py-2">
+                      <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: LEVEL_META[inc.severity].color }} title={inc.severity} />
+                    </td>
+                    <td className="px-2 py-2">
+                      <span className="flex items-center gap-1.5">
+                        <BrandLogo name={inc.vendor} size={18} />
+                        <span className="hidden text-[11px] text-slate-500 xl:inline">{inc.source}</span>
+                      </span>
+                    </td>
+                    <td className="px-2 py-2">
+                      <div className="font-medium text-slate-700">{inc.type}</div>
+                    </td>
+                    <td className="px-2 py-2">
+                      <Link to={`/people/${inc.personId}`} className="text-brand-600 hover:underline">{inc.person}</Link>
+                    </td>
+                    <td className="px-2 py-2"><span className={`chip ${STATUS_STYLE[inc.status]}`}>{inc.status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="card p-4">
+          <h3 className="mb-3 text-sm font-semibold text-slate-800">Incidents by Source</h3>
+          <div className="space-y-3">
+            {bySource.map((s) => (
+              <div key={s.source} className="flex items-center gap-3">
+                <BrandLogo name={s.vendor} size={26} />
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="chip bg-slate-100 text-[10px] text-slate-500">{inc.source}</span>
-                    <span className="text-[10px] text-slate-400">{inc.time}</span>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="truncate font-medium text-slate-600">{s.source}</span>
+                    <span className="font-semibold text-slate-700">{s.count}</span>
                   </div>
-                  <div className="mt-0.5 truncate text-xs font-semibold text-slate-700">{inc.type}</div>
-                  <div className="truncate text-[11px] text-slate-400">{inc.person} · {inc.department}</div>
-                  {inc.autopilot && (
-                    <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-green-600">
-                      <Bot size={11} /> Autopilot · {inc.autopilot.action}
-                    </div>
-                  )}
+                  <div className="h-2 w-full rounded-full bg-slate-100">
+                    <div className="h-2 rounded-full bg-brand-500" style={{ width: `${(s.count / maxSource) * 100}%` }} />
+                  </div>
                 </div>
-                <RiskBadge level={inc.severity} />
-              </Link>
+              </div>
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Workforce risk matrix — single pane of the whole user base */}
+      <div className="card p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-800">Workforce Risk Matrix</h3>
+          <div className="flex items-center gap-3 text-[11px] text-slate-500">
+            {(['High', 'Medium', 'Low', 'Secure'] as const).map((lv) => (
+              <span key={lv} className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: LEVEL_META[lv].color }} /> {lv}</span>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-[repeat(12,minmax(0,1fr))] gap-1.5 sm:grid-cols-[repeat(18,minmax(0,1fr))] lg:grid-cols-[repeat(24,minmax(0,1fr))]">
+          {activePeople.map((p) => (
+            <Link
+              key={p.id}
+              to={`/people/${p.id}`}
+              title={`${p.name} · ${p.department} · ${p.score}`}
+              className="group relative aspect-square rounded-[4px] transition-transform hover:z-10 hover:scale-125"
+              style={{ background: LEVEL_META[p.level].color }}
+            >
+              <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white/0 group-hover:text-white/90">
+                {p.score}
+              </span>
+            </Link>
+          ))}
+        </div>
+        <p className="mt-3 text-[11px] text-slate-400">
+          Every active employee, one tile — colored by live Human Risk Score. Hover for score, click to open the person.
+        </p>
       </div>
     </div>
   )

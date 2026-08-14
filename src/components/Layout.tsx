@@ -4,7 +4,6 @@ import {
   Radio,
   Users,
   ShieldAlert,
-  Bot,
   Blocks,
   Settings,
   Search,
@@ -35,7 +34,6 @@ const SECTIONS: NavSection[] = [
     ],
   },
   { to: '/elements', label: 'Risk Elements', icon: ShieldAlert, sub: [{ to: '/elements', label: 'All Elements' }] },
-  { to: '/autopilot', label: 'AI Autopilot', icon: Bot, sub: [{ to: '/autopilot', label: 'Autonomy & Actions' }] },
   {
     to: '/integrations',
     label: 'Integrations',
@@ -49,9 +47,8 @@ function sectionForPath(path: string): NavSection {
   if (path.startsWith('/live')) return SECTIONS[1]
   if (path.startsWith('/people')) return SECTIONS[2]
   if (path.startsWith('/elements')) return SECTIONS[3]
-  if (path.startsWith('/autopilot')) return SECTIONS[4]
-  if (path.startsWith('/integrations')) return SECTIONS[5]
-  if (path.startsWith('/settings')) return SECTIONS[6]
+  if (path.startsWith('/integrations')) return SECTIONS[4]
+  if (path.startsWith('/settings')) return SECTIONS[5]
   return SECTIONS[0]
 }
 
@@ -121,8 +118,14 @@ export default function Layout() {
           })}
         </div>
         <div className="mt-auto rounded-xl bg-gradient-to-br from-brand-50 to-white p-3 text-xs text-slate-500">
-          <p className="font-semibold text-brand-700">AI Risk Analyst</p>
-          <p className="mt-1 leading-relaxed">Signals correlated across 7 products into one human risk view.</p>
+          <p className="flex items-center gap-1.5 font-semibold text-brand-700">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+            </span>
+            Signals live
+          </p>
+          <p className="mt-1 leading-relaxed">7 risk elements correlated from your security stack into one human risk view.</p>
         </div>
       </aside>
 

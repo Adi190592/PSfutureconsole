@@ -8,6 +8,7 @@ import {
 } from '../data/integrations'
 import { ELEMENT_BY_KEY } from '../lib/riskModel'
 import { useIntegrations } from '../store/integrations'
+import { BrandLogo } from './BrandLogo'
 
 const REGIONS = ['US (us-east)', 'EU (eu-central)', 'India (ap-south)', 'UAE (me-central)']
 const STEPS = ['Vendor', 'Deployment', 'Authenticate', 'Signal scope', 'Test', 'Enable']
@@ -76,11 +77,12 @@ export default function ConnectWizard({ integration, onClose }: { integration: I
                   <button
                     key={v}
                     onClick={() => setVendor(v)}
-                    className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm ${
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-3 text-sm ${
                       vendor === v ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    {v}
+                    <BrandLogo name={v} size={22} />
+                    <span className="flex-1 text-left">{v}</span>
                     {vendor === v && <Check size={15} />}
                   </button>
                 ))}

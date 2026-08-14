@@ -13,13 +13,11 @@ import {
 } from 'recharts'
 import * as Icons from 'lucide-react'
 import {
-  Users,
   ShieldAlert,
   TrendingUp,
   Gauge,
-  UserCheck,
   ChevronRight,
-  Sparkles,
+  Target,
 } from 'lucide-react'
 import {
   orgStats,
@@ -67,6 +65,7 @@ export default function Dashboard() {
   const topEl = elementAggregates[0]
   const { integrations } = useIntegrations()
   const connectedSources = integrations.filter((i) => i.status === 'connected' || i.status === 'syncing')
+  const signalsPerDay = connectedSources.reduce((a, b) => a + (b.signalsPerDay ?? 0), 0)
   return (
     <div className="space-y-5">
       <div className="flex items-end justify-between">
@@ -97,13 +96,13 @@ export default function Dashboard() {
         <span className="text-xs font-semibold text-brand-600">Manage →</span>
       </Link>
 
-      {/* KPI row */}
+      {/* KPI row — reads left→right as the HRM story: signals in → score → who's at risk → what's driving it → is it improving */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <Kpi accent="#1a53eb" icon={Gauge} label="Org Human Risk Score" value={`${orgStats.orgScore}`} sub={`${orgStats.delta >= 0 ? '+' : ''}${orgStats.delta} vs last period`} />
-        <Kpi accent="#8b5cf6" icon={UserCheck} label="People Assessed" value={`${orgStats.assessed.toLocaleString()}`} sub={`${orgStats.inactive} inactive`} />
+        <Kpi accent="#1a53eb" icon={Blocks} label="Signals / day" value={signalsPerDay.toLocaleString()} sub={`${connectedSources.length} sources connected`} />
+        <Kpi accent="#f59e0b" icon={Gauge} label="Org Human Risk Score" value={`${orgStats.orgScore}`} sub={`${orgStats.assessed.toLocaleString()} people scored`} />
         <Kpi accent="#ef4444" icon={ShieldAlert} label="High-Risk People" value={`${orgStats.high}`} sub={`${orgStats.highPct}% of workforce`} />
-        <Kpi accent="#f59e0b" icon={TrendingUp} label="Top Risk Element" value={topEl.short} sub={`avg ${topEl.avg} · ${topEl.affected} affected`} />
-        <Kpi accent="#22c55e" icon={Users} label="Medium + Low" value={`${orgStats.medium + orgStats.low}`} sub={`${orgStats.secure} secure`} />
+        <Kpi accent="#8b5cf6" icon={TrendingUp} label="Top Risk Driver" value={topEl.short} sub={`avg ${topEl.avg} · ${topEl.affected} affected`} />
+        <Kpi accent={orgStats.delta > 0 ? '#ef4444' : '#22c55e'} icon={TrendingUp} label="30-day Trend" value={`${orgStats.delta >= 0 ? '+' : ''}${orgStats.delta}`} sub={orgStats.delta > 0 ? 'risk rising' : 'risk falling'} />
       </div>
 
       {/* Trend + distribution */}
@@ -247,8 +246,8 @@ export default function Dashboard() {
 
         <div className="card p-4">
           <div className="mb-3 flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600"><Sparkles size={15} /></span>
-            <h3 className="text-sm font-semibold text-slate-800">AI Risk Analyst · Focus Areas</h3>
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600"><Target size={15} /></span>
+            <h3 className="text-sm font-semibold text-slate-800">Priority Focus Areas</h3>
           </div>
           <div className="space-y-3">
             {orgRecommendations.map((r) => {
