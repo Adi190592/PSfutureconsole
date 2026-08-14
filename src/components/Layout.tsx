@@ -1,10 +1,11 @@
 import { NavLink, Outlet, useLocation, Link } from 'react-router-dom'
 import {
   LayoutDashboard,
+  Radio,
   Users,
   ShieldAlert,
-  GraduationCap,
-  Activity,
+  Bot,
+  Blocks,
   Settings,
   Search,
   Bell,
@@ -23,6 +24,7 @@ interface NavSection {
 
 const SECTIONS: NavSection[] = [
   { to: '/', label: 'Human Risk', icon: LayoutDashboard, sub: [{ to: '/', label: 'Overview' }] },
+  { to: '/live', label: 'Live Ops', icon: Radio, sub: [{ to: '/live', label: 'Live Operations' }] },
   {
     to: '/people',
     label: 'People',
@@ -33,17 +35,23 @@ const SECTIONS: NavSection[] = [
     ],
   },
   { to: '/elements', label: 'Risk Elements', icon: ShieldAlert, sub: [{ to: '/elements', label: 'All Elements' }] },
-  { to: '/awareness', label: 'Awareness', icon: GraduationCap, sub: [{ to: '/awareness', label: 'Coverage' }] },
-  { to: '/activity', label: 'Signals', icon: Activity, sub: [{ to: '/activity', label: 'Signal Feed' }] },
+  { to: '/autopilot', label: 'AI Autopilot', icon: Bot, sub: [{ to: '/autopilot', label: 'Autonomy & Actions' }] },
+  {
+    to: '/integrations',
+    label: 'Integrations',
+    icon: Blocks,
+    sub: [{ to: '/integrations', label: 'Signal Sources' }],
+  },
   { to: '/settings', label: 'Settings', icon: Settings, sub: [{ to: '/settings', label: 'General' }] },
 ]
 
 function sectionForPath(path: string): NavSection {
-  if (path.startsWith('/people')) return SECTIONS[1]
-  if (path.startsWith('/elements')) return SECTIONS[2]
-  if (path.startsWith('/awareness')) return SECTIONS[3]
-  if (path.startsWith('/activity')) return SECTIONS[4]
-  if (path.startsWith('/settings')) return SECTIONS[5]
+  if (path.startsWith('/live')) return SECTIONS[1]
+  if (path.startsWith('/people')) return SECTIONS[2]
+  if (path.startsWith('/elements')) return SECTIONS[3]
+  if (path.startsWith('/autopilot')) return SECTIONS[4]
+  if (path.startsWith('/integrations')) return SECTIONS[5]
+  if (path.startsWith('/settings')) return SECTIONS[6]
   return SECTIONS[0]
 }
 

@@ -32,6 +32,9 @@ import {
 } from '../data/analytics'
 import { RiskBadge, Avatar, SectionTitle, DriverBar } from '../components/ui'
 import { LEVEL_META } from '../lib/riskModel'
+import { useIntegrations } from '../store/integrations'
+import { STATUS_META } from '../data/integrations'
+import { Blocks } from 'lucide-react'
 
 function Kpi({
   accent,
@@ -62,6 +65,8 @@ function Kpi({
 
 export default function Dashboard() {
   const topEl = elementAggregates[0]
+  const { integrations } = useIntegrations()
+  const connectedSources = integrations.filter((i) => i.status === 'connected' || i.status === 'syncing')
   return (
     <div className="space-y-5">
       <div className="flex items-end justify-between">
@@ -71,6 +76,26 @@ export default function Dashboard() {
         </div>
         <div className="chip bg-slate-100 text-slate-500">Last 12 months</div>
       </div>
+
+      {/* Connected signal sources */}
+      <Link to="/integrations" className="card flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-slate-50">
+        <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <Blocks size={16} className="text-brand-600" /> Signal sources
+        </span>
+        <span className="chip bg-green-50 text-green-600">{connectedSources.length}/{integrations.length} connected</span>
+        <div className="flex flex-1 flex-wrap gap-1.5">
+          {integrations.map((i) => {
+            const st = STATUS_META[i.status]
+            return (
+              <span key={i.id} className="chip text-[11px]" style={{ background: `${i.accent}12`, color: i.accent }}>
+                <span className={`h-1.5 w-1.5 rounded-full ${i.status === 'syncing' ? 'animate-pulse' : ''}`} style={{ background: st.color }} />
+                {i.abbrev}
+              </span>
+            )
+          })}
+        </div>
+        <span className="text-xs font-semibold text-brand-600">Manage →</span>
+      </Link>
 
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">

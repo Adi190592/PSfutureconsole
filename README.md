@@ -59,8 +59,35 @@ rollups in [`src/data/analytics.ts`](src/data/analytics.ts).
   business impact context. (Open **John Doe** for the deck's reference story.)
 - **Risk Elements** (`/elements`, `/elements/:key`) — each element's org contribution,
   workforce distribution, and highest-exposure people.
+- **Live Operations** (`/live`) — a single pane over the entire workforce: live-ticking
+  telemetry (events/min, incidents/min), a **Workforce Risk Matrix** (every employee as a
+  risk-colored tile), and a streaming incident wall fed by the integrated tools.
+- **AI Autopilot** (`/autopilot`) — where the machine takes over remediation end-to-end.
+  Autonomy modes (Suggest → Approve → **Autonomous**), per-task takeover toggles mapped to
+  the source tool, hours-saved stats, guardrails, and a live feed of actions the AI executed.
+- **Integrations** (`/integrations`) — connect the security tools already in your
+  environment. A guided 6-step **connect wizard** for **Email Gateway, DLP, UBA, PIM, PAM**
+  (plus native sensors), each showing supported vendors, deployment method, status, signals/day,
+  coverage, and which risk element it feeds. Connections are made live in-session.
 
-Awareness / Signals / Settings are stubbed as blueprint placeholders.
+### Integrations feed the score
+
+PhishSheriff **integrates** these tools — it does not build them. Each connector deploys a
+lightweight collector **inside the customer environment**, reads the vendor's API/SIEM stream,
+normalizes the signal, and feeds the matching risk element:
+
+| Tool | Feeds element | Example vendors |
+|---|---|---|
+| Email Gateway (SEG) | Phishing Susceptibility | Proofpoint, Mimecast, Defender for O365 |
+| DLP | Data Handling | Microsoft Purview, Forcepoint, Symantec |
+| UBA / UEBA | AI & Behavior | Exabeam, Securonix, Sentinel UEBA |
+| PIM | Identity Risk | Microsoft Entra PIM, CyberArk, Saviynt |
+| PAM | Identity / Credential | CyberArk, BeyondTrust, Delinea |
+
+The live telemetry is simulated by hooks in `src/lib/live.ts` — swap them for a WebSocket/SSE
+client to move from prototype to production without touching the components.
+
+Settings is stubbed as a blueprint placeholder.
 
 ---
 
